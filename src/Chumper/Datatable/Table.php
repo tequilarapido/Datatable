@@ -78,9 +78,9 @@ class Table {
      */
     private $aliasColumns = array();
 
-    function __construct()
+    function __construct($config = null)
     {
-        $this->config = Config::get('datatable::table');
+        $this->config = is_null($config) ? Config::get('datatable::table') : $config;
 
         $this->setId( $this->config['id'] );
         $this->setClass( $this->config['class'] );

@@ -112,10 +112,10 @@ abstract class BaseEngine {
     protected $exactWordSearch = false;
 
 
-    function __construct()
+    function __construct($config = null)
     {
         $this->columns = new Collection();
-        $this->config = Config::get('datatable::engine');
+        $this->config  = is_null($config) ? Config::get('datatable::engine') : $config;
         $this->setExactWordSearch( $this->config['exactWordSearch'] );
         return $this;
     }
