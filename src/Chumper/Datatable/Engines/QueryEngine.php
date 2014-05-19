@@ -41,9 +41,9 @@ class QueryEngine extends BaseEngine {
         'counter'           =>  0,
     );
 
-    function __construct($builder)
+    function __construct($builder, $config)
     {
-        parent::__construct();
+        parent::__construct($config);
         if($builder instanceof Relation)
         {
             $this->builder = $builder->getBaseQuery();
