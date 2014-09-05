@@ -88,9 +88,9 @@ class CollectionEngine extends BaseEngine {
         return $this;
     }
 
-    public function stripOrder()
+    public function stripOrder($callback = true)
     {
-        $this->options['stripOrder'] = true;
+        $this->options['stripOrder'] = $callback;
         return $this;
     }
 
@@ -100,10 +100,9 @@ class CollectionEngine extends BaseEngine {
         return $this;
     }
 
-    public function setOrderStrip()
+    public function setOrderStrip($callback = true)
     {
-        $this->options['stripOrder'] = true;
-        return $this;
+        return $this->stripOrder($callback);
     }
 
     public function setCaseSensitive($value)
@@ -129,7 +128,7 @@ class CollectionEngine extends BaseEngine {
 
     private function doInternalSearch(Collection $columns, array $searchColumns)
     {
-        if((is_null($this->search) || empty($this->search)) && empty($this->fieldSearches))
+        if(is_null($this->search) or empty($this->search))
             return;
 
         $value = $this->search;
@@ -141,17 +140,9 @@ class CollectionEngine extends BaseEngine {
         $ii = 0;
         foreach($columns as $i => $col)
         {
-            if(in_array($columns->get($i)->getName(), $searchColumns) || in_array($columns->get($i)->getName(), $this->fieldSearches))
+            if(in_array($columns->get($i)->getName(), $searchColumns))
             {
-                // map values to columns, where there is no value use the global value
-                if(($field = array_search($columns->get($i)->getName(), $this->fieldSearches)) !== FALSE)
-                {
-                    $toSearch[$ii] = $this->columnSearches[$field];
-                }
-                else
-                {
-                    $toSearch[$ii] = $value;
-                }
+                $toSearch[] = $ii;
             }
             $ii++;
         }
@@ -161,8 +152,7 @@ class CollectionEngine extends BaseEngine {
         {
             for($i = 0; $i < count($row); $i++)
             {
-                //$toSearch[$i] = value
-                if(!array_key_exists($i, $toSearch))
+                if(!in_array($i, $toSearch))
                     continue;
 
                 $column = $i;
@@ -183,12 +173,12 @@ class CollectionEngine extends BaseEngine {
                 {
                     if($self->exactWordSearch)
                     {
-                        if($toSearch[$i] === $search)
+                        if($value === $search)
                             return true;
                     }
                     else
                     {
-                        if(str_contains($search,$toSearch[$i]))
+                        if(str_contains($search,$value))
                             return true;
                     }
                 }
@@ -196,12 +186,12 @@ class CollectionEngine extends BaseEngine {
                 {
                     if($self->getExactWordSearch())
                     {
-                        if(mb_strtolower($toSearch[$i]) === mb_strtolower($search))
+                        if(strtolower($value) === strtolower($search))
                             return true;
                     }
                     else
                     {
-                        if(str_contains(mb_strtolower($search),mb_strtolower($toSearch[$i])))
+                        if(str_contains(strtolower($search),strtolower($value)))
                             return true;
                     }
                 }
@@ -214,7 +204,7 @@ class CollectionEngine extends BaseEngine {
         if(is_null($this->orderColumn))
             return;
 
-        $column = $this->orderColumn[0];
+        $column = $this->orderColumn;
         $stripOrder = $this->options['stripOrder'];
         $self = $this;
         $this->workingCollection->sortBy(function($row) use ($column,$stripOrder,$self) {
@@ -225,13 +215,17 @@ class CollectionEngine extends BaseEngine {
             }
             if($stripOrder)
             {
-                return strip_tags($row[$column]);
+                if(is_callable($stripOrder)){
+                    return $stripOrder($row, $column);
+                }else{
+                    return strip_tags($row[$column]);
+                }
             }
             else
             {
                 return $row[$column];
             }
-        });
+        }, SORT_NATURAL);
 
         if($this->orderDirection == BaseEngine::ORDER_DESC)
             $this->workingCollection = $this->workingCollection->reverse();
@@ -251,6 +245,10 @@ class CollectionEngine extends BaseEngine {
             if(!is_null($self->getRowId()) && is_callable($self->getRowId()))
             {
                 $entry['DT_RowId'] = call_user_func($self->getRowId(),$row);
+            }
+            if(!is_null($self->getRowData()) && is_callable($self->getRowData()))
+            {
+                $entry['DT_RowData'] = call_user_func($self->getRowData(),$row);
             }
             $i=0;
             foreach ($columns as $col)

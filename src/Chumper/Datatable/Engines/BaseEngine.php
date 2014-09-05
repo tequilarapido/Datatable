@@ -38,6 +38,11 @@ abstract class BaseEngine {
     /**
      * @var array
      */
+    protected $rowData = null;
+
+    /**
+     * @var array
+     */
     protected $columnSearches = array();
 
     /**
@@ -45,6 +50,13 @@ abstract class BaseEngine {
      * support for DB::raw fields on where
      */
     protected $fieldSearches = array();
+
+    /**
+     * @var array
+     * support for DB::raw fields on where
+     * sburkett - added for column-based exact matching                                                                                                            
+     */                                                                                                                                                            
+    protected $columnSearchExact = array(); 
 
     /**
      * @var
@@ -205,7 +217,9 @@ abstract class BaseEngine {
             }
             else
             {
-                $this->columns->put($property, new FunctionColumn($property, function($model) use($property){return is_array($model)?$model[$property]:$model->$property;}));
+                $this->columns->put($property, new FunctionColumn($property, function($model) use($property){
+                    try{return is_array($model)?$model[$property]:$model->$property;}catch(Exception $e){return null;}    
+                }));
             }
             $this->showColumns[] = $property;
         }
@@ -279,6 +293,16 @@ abstract class BaseEngine {
         return $this;
     }
 
+    /**
+     * @param $function Set a function for dynamic html5 data attributes
+     * @return $this
+     */
+    public function setRowData($function)
+    {
+        $this->rowData = $function;
+        return $this;
+    }
+
     public function setAliasMapping($value = true)
     {
         $this->aliasMapping = $value;
@@ -290,6 +314,18 @@ abstract class BaseEngine {
         $this->exactWordSearch = $value;
         return $this;
     }
+    
+    /**
+     * @param $columnNames Sets up a lookup table for which columns should use exact matching -sburkett
+     * @return $this
+     */
+    public function setExactMatchColumns($columnNames)
+    {
+      foreach($columnNames as $columnIndex)
+        $this->columnSearchExact[ $columnIndex ] = true;
+
+      return $this;
+    }
 
     public function getRowClass()
     {
@@ -299,6 +335,11 @@ abstract class BaseEngine {
     public function getRowId()
     {
         return $this->rowId;
+    }
+
+    public function getRowData()
+    {
+        return $this->rowData;
     }
 
     public function getAliasMapping()
@@ -397,7 +438,7 @@ abstract class BaseEngine {
     {
         //dd($columnIndex, $searchValue, $this->searchColumns);
         if (!isset($this->searchColumns[$columnIndex])) return;
-        if (empty($searchValue)) return;
+        if (empty($searchValue) && $searchValue !== '0') return;
 
         $columnName = $this->searchColumns[$columnIndex];
         $this->searchOnColumn($columnName, $searchValue);
