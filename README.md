@@ -131,7 +131,7 @@ You should now have a working datatable on your page.
 
 ###One route
 
-In your route you should use the Datatable::shouldHandle method which will check wheter the plugin should handle the request or not.
+In your route you should use the Datatable::shouldHandle method which will check whether the plugin should handle the request or not.
 
 ```php
     if(Datatable::shouldHandle())
@@ -188,7 +188,7 @@ If you want to provide your own template for the table just provide the path to 
     ->showColumns('id')
     ->addColumn('name',function($model)
         {
-            return $model->getPresenter()->yourProperty
+            return $model->getPresenter()->yourProperty;
         }
     )->make();
 ```
@@ -525,6 +525,18 @@ In the datatable view (eg, 'my.datatable.template'):
         });
     @endif
 ```
+
+**setOrder(array $order)**
+
+Defines the order that a datatable will be ordered by on first page load.
+```php
+{{ DataTable::table()
+    ->addColumn('ID', 'First Name', 'Last Name')
+    ->setUrl($ajaxRouteToTableData)
+    ->setOrder(array(2=>'asc', 1=>'asc')) // sort by last name then first name
+    ->render('my.datatable.template') }}
+```
+
 ##Contributors
 
 * [jgoux](https://github.com/jgoux) for helping with searching on number columns in the database
