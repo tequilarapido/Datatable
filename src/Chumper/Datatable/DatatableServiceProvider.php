@@ -3,29 +3,33 @@
 use Illuminate\Support\ServiceProvider;
 use View;
 
-class DatatableServiceProvider extends ServiceProvider {
+class DatatableServiceProvider extends ServiceProvider
+{
 
-	/**
-	 * Indicates if loading of the provider is deferred.
-	 *
-	 * @var bool
-	 */
-	protected $defer = false;
+    /**
+     * Indicates if loading of the provider is deferred.
+     *
+     * @var bool
+     */
+    protected $defer = false;
 
     public function boot()
     {
-        $this->package('chumper/datatable');
+        $this->publishes([
+            __DIR__ . '/../../config/config.php' => config_path('packages/chumper_datatable.php'),
+        ]);
+
+        $this->loadViewsFrom(__DIR__.'/../../', 'chumper_datatable');
     }
 
     /**
-	 * Register the service provider.
-	 *
-	 * @return void
-	 */
+     * Register the service provider.
+     *
+     * @return void
+     */
     public function register()
     {
-        $this->app['datatable'] = $this->app->share(function($app)
-        {
+        $this->app['datatable'] = $this->app->share(function ($app) {
             return new Datatable;
         });
     }
